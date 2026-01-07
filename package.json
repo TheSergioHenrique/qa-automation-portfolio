@@ -1,0 +1,23 @@
+{
+  "name": "qa-automation-portfolio",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheSergioHenrique/qa-automation-portfolio.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TheSergioHenrique/qa-automation-portfolio/issues"
+  },
+  "homepage": "https://github.com/TheSergioHenrique/qa-automation-portfolio#readme",
+  "devDependencies": {
+    "cypress": "^15.8.2"
+  }
+}
