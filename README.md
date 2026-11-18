@@ -1,75 +1,88 @@
 # QA Automation Portfolio
 
+[![Cypress E2E](https://github.com/TheSergioHenrique/qa-automation-portfolio/actions/workflows/cypress.yml/badge.svg)](https://github.com/TheSergioHenrique/qa-automation-portfolio/actions/workflows/cypress.yml)
 ![Cypress](https://img.shields.io/badge/Cypress-17202C?style=for-the-badge&logo=cypress&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
 ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white)
 
-QA automation portfolio featuring Cypress E2E tests, API testing, and Bruno collections. Includes CI/CD with GitHub Actions and Mochawesome reports.
+End-to-end test automation for [Sauce Demo](https://www.saucedemo.com/) with Cypress, running on every push through a GitHub Actions pipeline that publishes a Mochawesome HTML report.
 
-## Work in Progress
+## ✅ What's covered
 
-This project is under active development. Check back soon for:
+| Spec | Tests | Scope |
+|------|:-----:|-------|
+| `login.cy.js` | 6 | Valid login, locked-out user, invalid credentials, empty username/password/both |
+| `navigation.cy.js` | 11 | Product listing (name, price, description, image), price format and validation, sorting A–Z / Z–A / price, add/remove button state, cart badge |
+| `cart.cy.js` | 7 + 1 skipped | Add/remove products, cart badge, cart page, continue shopping |
+| `responsive.cy.js` | 4 × 4 devices | Products page, hamburger menu and full purchase flow on iPhone X, Galaxy S10, iPhone 4 and MacBook 15 |
+| `intercept.cy.js` | 1 | Base for request interception (in progress) |
 
-- [ ] E2E tests for [Sauce Demo](https://www.saucedemo.com/)
-- [ ] API tests with Cypress
-- [ ] Custom commands and utilities
-- [ ] Mobile/responsive viewport testing
-- [ ] Request interception and mocking
-- [ ] Mochawesome HTML reports
-- [ ] CI/CD pipeline with GitHub Actions
-- [ ] Bruno API collections
+**Custom commands** (`cypress/support/commands.js`): `cy.login()`, `cy.addToCart()`, `cy.RemoveFromCart()`.
+**Test data** lives in fixtures (`cypress/fixtures/users.json`).
+
+### 🐛 Known bugs found
+
+| Bug | Where | Status |
+|-----|-------|--------|
+| Checkout is allowed with an empty cart: the user goes to `/checkout-step-one.html` instead of staying on `/cart.html` | `cart.cy.js` | Test kept as `it.skip` so the pipeline stays green. Remove `.skip` to reproduce |
+
+## 🔁 CI/CD
+
+The workflow [`.github/workflows/cypress.yml`](.github/workflows/cypress.yml) runs on every push and pull request to `main`, and can also be triggered manually:
+
+1. Installs dependencies (with npm cache)
+2. Runs the whole suite headless in Chrome
+3. Uploads the **Mochawesome HTML report** as an artifact on every run
+4. Uploads **screenshots** when a test fails
+
+To see the report, open a run in the [Actions tab](https://github.com/TheSergioHenrique/qa-automation-portfolio/actions), download `mochawesome-report` and open `index.html`.
 
 ## 🛠️ Tech Stack
 
 | Tool | Purpose |
 |------|---------|
-| [Cypress](https://www.cypress.io/) | E2E and API testing |
-| [Mochawesome](https://github.com/adamgruber/mochawesome) | Test reports |
-| [Bruno](https://www.usebruno.com/) | API collections |
+| [Cypress](https://www.cypress.io/) | E2E testing |
+| [cypress-mochawesome-reporter](https://github.com/LironEr/cypress-mochawesome-reporter) | HTML reports with embedded screenshots |
 | [GitHub Actions](https://github.com/features/actions) | CI/CD |
+
+## 🗺️ Roadmap
+
+- [x] E2E tests for Sauce Demo (login, navigation, cart)
+- [x] Custom commands and fixtures
+- [x] Responsive viewport testing
+- [x] CI/CD pipeline with GitHub Actions
+- [x] Mochawesome HTML reports
+- [ ] Request interception and mocking (base in place)
+- [ ] API tests with Cypress
+- [ ] Bruno API collections
+- [ ] Playwright version of the suite
 
 ## 📁 Project Structure
 
 ```
 qa-automation-portfolio/
-├── .github/workflows/     # CI/CD configuration
-├── bruno-collections/     # Bruno API collections
+├── .github/workflows/
+│   └── cypress.yml        # CI pipeline
 ├── cypress/
-│   ├── e2e/
-│   │   ├── sauce-demo/    # E2E tests
-│   │   └── api/           # API tests
+│   ├── e2e/sauce-demo/    # E2E specs
 │   ├── fixtures/          # Test data
-│   └── support/           # Custom commands
-├── cypress.config.js      # Cypress configuration
+│   └── support/           # Custom commands + reporter registration
+├── cypress.config.js      # Cypress + reporter configuration
 └── package.json
 ```
 
 ## 🚀 Getting Started
 
-### Prerequisites
-
-- Node.js 18+
-- npm or yarn
-
-### Installation
+**Prerequisites:** Node.js 18+
 
 ```bash
-# Clone the repository
 git clone https://github.com/TheSergioHenrique/qa-automation-portfolio.git
-
-# Navigate to project folder
 cd qa-automation-portfolio
-
-# Install dependencies
-npm install
+npm ci
 ```
 
-### Running Tests
-
-```bash
-# Open Cypress Test Runner (interactive mode)
-npx cypress open
-
-# Run tests in headless mode
-npx cypress run
-```
+| Command | What it does |
+|---------|--------------|
+| `npm test` | Runs the suite headless and generates `mochawesome-report/index.html` |
+| `npm run cy:run:chrome` | Same, in Chrome |
+| `npm run cy:open` | Opens the Cypress interactive runner |
