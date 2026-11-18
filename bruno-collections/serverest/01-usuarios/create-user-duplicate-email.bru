@@ -1,0 +1,30 @@
+meta {
+  name: Create user with duplicate email
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/usuarios
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "nome": "QA Bruno Duplicate",
+    "email": "{{email}}",
+    "password": "{{password}}",
+    "administrador": "false"
+  }
+}
+
+tests {
+  test("should return 400 Bad Request", function () {
+    expect(res.status).to.equal(400);
+  });
+
+  test("should reject an email already in use", function () {
+    expect(res.body.message).to.equal("Este email já está sendo usado");
+  });
+}

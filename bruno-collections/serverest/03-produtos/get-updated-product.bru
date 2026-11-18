@@ -1,0 +1,19 @@
+meta {
+  name: Get updated product
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/produtos/{{productId}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("should persist the new price and quantity", function () {
+    expect(res.status).to.equal(200);
+    expect(res.body.preco).to.equal(99);
+    expect(res.body.quantidade).to.equal(5);
+  });
+}

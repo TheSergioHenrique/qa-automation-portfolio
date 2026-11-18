@@ -1,0 +1,30 @@
+meta {
+  name: Create product without token
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/produtos
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "nome": "Produto sem token",
+    "preco": 10,
+    "descricao": "Nao deve ser criado",
+    "quantidade": 1
+  }
+}
+
+tests {
+  test("should return 401 Unauthorized", function () {
+    expect(res.status).to.equal(401);
+  });
+
+  test("should explain the token problem", function () {
+    expect(res.body.message).to.equal("Token de acesso ausente, inválido, expirado ou usuário do token não existe mais");
+  });
+}

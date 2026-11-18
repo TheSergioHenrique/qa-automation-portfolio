@@ -1,0 +1,44 @@
+meta {
+  name: Create admin user
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/usuarios
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "nome": "QA Bruno",
+    "email": "{{email}}",
+    "password": "{{password}}",
+    "administrador": "true"
+  }
+}
+
+script:pre-request {
+  // Unique email per run so the collection can run against any ServeRest instance
+  bru.setVar("email", `qa.${Date.now()}@bruno.dev`);
+  bru.setVar("password", "Senha@123");
+}
+
+script:post-response {
+  bru.setVar("userId", res.body._id);
+}
+
+tests {
+  test("should return 201 Created", function () {
+    expect(res.status).to.equal(201);
+  });
+
+  test("should confirm the registration", function () {
+    expect(res.body.message).to.equal("Cadastro realizado com sucesso");
+  });
+
+  test("should return the new user id", function () {
+    expect(res.body._id).to.be.a("string").and.not.be.empty;
+  });
+}

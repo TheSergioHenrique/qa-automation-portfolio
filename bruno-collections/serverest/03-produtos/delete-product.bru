@@ -1,0 +1,25 @@
+meta {
+  name: Delete product
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{baseUrl}}/produtos/{{productId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: {{authorization}}
+}
+
+tests {
+  test("should return 200 OK", function () {
+    expect(res.status).to.equal(200);
+  });
+
+  test("should confirm the deletion", function () {
+    expect(res.body.message).to.equal("Registro excluído com sucesso");
+  });
+}

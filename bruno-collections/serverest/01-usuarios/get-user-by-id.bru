@@ -1,0 +1,27 @@
+meta {
+  name: Get user by id
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/usuarios/{{userId}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("should return 200 OK", function () {
+    expect(res.status).to.equal(200);
+  });
+
+  test("should return the user created earlier", function () {
+    expect(res.body._id).to.equal(bru.getVar("userId"));
+    expect(res.body.email).to.equal(bru.getVar("email"));
+    expect(res.body.administrador).to.equal("true");
+  });
+
+  test("should match the user schema", function () {
+    expect(res.body).to.have.all.keys("nome", "email", "password", "administrador", "_id");
+  });
+}

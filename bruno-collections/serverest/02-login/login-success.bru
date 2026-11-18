@@ -1,0 +1,37 @@
+meta {
+  name: Login with valid credentials
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "{{email}}",
+    "password": "{{password}}"
+  }
+}
+
+script:post-response {
+  // ServeRest returns the full "Bearer <jwt>" value, ready for the Authorization header
+  bru.setVar("authorization", res.body.authorization);
+}
+
+tests {
+  test("should return 200 OK", function () {
+    expect(res.status).to.equal(200);
+  });
+
+  test("should confirm the login", function () {
+    expect(res.body.message).to.equal("Login realizado com sucesso");
+  });
+
+  test("should return a Bearer token", function () {
+    expect(res.body.authorization).to.match(/^Bearer \S+$/);
+  });
+}

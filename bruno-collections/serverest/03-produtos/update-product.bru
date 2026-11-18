@@ -1,0 +1,34 @@
+meta {
+  name: Update product
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/produtos/{{productId}}
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: {{authorization}}
+}
+
+body:json {
+  {
+    "nome": "{{productName}}",
+    "preco": 99,
+    "descricao": "Produto atualizado pela collection do Bruno",
+    "quantidade": 5
+  }
+}
+
+tests {
+  test("should return 200 OK", function () {
+    expect(res.status).to.equal(200);
+  });
+
+  test("should confirm the update", function () {
+    expect(res.body.message).to.equal("Registro alterado com sucesso");
+  });
+}

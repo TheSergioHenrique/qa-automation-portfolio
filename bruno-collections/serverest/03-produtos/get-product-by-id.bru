@@ -1,0 +1,24 @@
+meta {
+  name: Get product by id
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/produtos/{{productId}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("should return 200 OK", function () {
+    expect(res.status).to.equal(200);
+  });
+
+  test("should return the product created earlier", function () {
+    expect(res.body._id).to.equal(bru.getVar("productId"));
+    expect(res.body.nome).to.equal(bru.getVar("productName"));
+    expect(res.body.preco).to.equal(150);
+    expect(res.body.quantidade).to.equal(10);
+  });
+}

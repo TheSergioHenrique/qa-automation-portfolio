@@ -1,0 +1,21 @@
+meta {
+  name: Delete user
+  type: http
+  seq: 1
+}
+
+delete {
+  url: {{baseUrl}}/usuarios/{{userId}}
+  body: none
+  auth: none
+}
+
+tests {
+  test("should return 200 OK", function () {
+    expect(res.status).to.equal(200);
+  });
+
+  test("should confirm the deletion", function () {
+    expect(res.body.message).to.equal("Registro excluído com sucesso");
+  });
+}
