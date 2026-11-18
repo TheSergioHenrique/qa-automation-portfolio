@@ -15,10 +15,12 @@ End-to-end test automation for [Sauce Demo](https://www.saucedemo.com/) with Cyp
 | `navigation.cy.js` | 11 | Product listing (name, price, description, image), price format and validation, sorting A–Z / Z–A / price, add/remove button state, cart badge |
 | `cart.cy.js` | 7 + 1 skipped | Add/remove products, cart badge, cart page, continue shopping |
 | `responsive.cy.js` | 4 × 4 devices | Products page, hamburger menu and full purchase flow on iPhone X, Galaxy S10, iPhone 4 and MacBook 15 |
-| `intercept.cy.js` | 1 | Base for request interception (in progress) |
+| `intercept.cy.js` | 6 | Network mocking with `cy.intercept()`: product images served from a fixture, failing (network error) and slow (3s delay) images, third-party telemetry (Backtrace) stubbed and returning 503. Checks the UI stays usable in every case |
 
 **Custom commands** (`cypress/support/commands.js`): `cy.login()`, `cy.addToCart()`, `cy.RemoveFromCart()`.
-**Test data** lives in fixtures (`cypress/fixtures/users.json`).
+**Test data** lives in fixtures (`cypress/fixtures/users.json`, `mock-product.png`).
+
+> **Note on mocking:** Sauce Demo has no product API (the catalog is bundled in the front-end), so the intercept specs target the requests of product images and telemetry. The browser cache is disabled through the Chrome DevTools Protocol in that spec so every image request hits `cy.intercept()`.
 
 ### 🐛 Known bugs found
 
@@ -52,7 +54,7 @@ To see the report, open a run in the [Actions tab](https://github.com/TheSergioH
 - [x] Responsive viewport testing
 - [x] CI/CD pipeline with GitHub Actions
 - [x] Mochawesome HTML reports
-- [ ] Request interception and mocking (base in place)
+- [x] Request interception and mocking
 - [ ] API tests with Cypress
 - [ ] Bruno API collections
 - [ ] Playwright version of the suite
