@@ -1,11 +1,17 @@
 # QA Automation Portfolio
 
-[![Cypress E2E](https://github.com/TheSergioHenrique/qa-automation-portfolio/actions/workflows/cypress.yml/badge.svg)](https://github.com/TheSergioHenrique/qa-automation-portfolio/actions/workflows/cypress.yml)
+[![QA Pipeline](https://github.com/TheSergioHenrique/qa-automation-portfolio/actions/workflows/cypress.yml/badge.svg)](https://github.com/TheSergioHenrique/qa-automation-portfolio/actions/workflows/cypress.yml)
 ![Cypress](https://img.shields.io/badge/Cypress-17202C?style=for-the-badge&logo=cypress&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+![Bruno](https://img.shields.io/badge/Bruno-F4AA41?style=for-the-badge&logo=bruno&logoColor=black)
 ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white)
 
-End-to-end test automation for [Sauce Demo](https://www.saucedemo.com/) with Cypress, running on every push through a GitHub Actions pipeline that publishes a Mochawesome HTML report.
+Test automation portfolio with two suites:
+
+- **E2E** for [Sauce Demo](https://www.saucedemo.com/) with Cypress
+- **API** for [ServeRest](https://github.com/ServeRest/ServeRest) with a Bruno collection
+
+Both run on every push through a GitHub Actions pipeline that publishes HTML reports.
 
 ## ✅ What's covered
 
@@ -22,6 +28,19 @@ End-to-end test automation for [Sauce Demo](https://www.saucedemo.com/) with Cyp
 
 > **Note on mocking:** Sauce Demo has no product API (the catalog is bundled in the front-end), so the intercept specs target the requests of product images and telemetry. The browser cache is disabled through the Chrome DevTools Protocol in that spec so every image request hits `cy.intercept()`.
 
+### 🔌 API tests (Bruno)
+
+The collection in [`bruno-collections/serverest`](bruno-collections/serverest) runs **14 requests / 31 tests** in order, passing data between requests (user id, email, token, product id):
+
+| Folder | Requests |
+|--------|----------|
+| `01-usuarios` | Create admin user (unique email per run), duplicate email (400), empty body with required-field errors (400), get by id with schema check |
+| `02-login` | Valid login storing the Bearer token, wrong password (401, no token returned) |
+| `03-produtos` | Full CRUD: create, create without token (401), get, update, check the update persisted, delete, get deleted (400) |
+| `04-cleanup` | Deletes the user created at the start, so the run leaves no data behind |
+
+Environments: `local` (`http://localhost:3000`, used in CI) and `serverest-dev` (public `https://serverest.dev`).
+
 ### 🐛 Known bugs found
 
 | Bug | Where | Status |
@@ -30,14 +49,14 @@ End-to-end test automation for [Sauce Demo](https://www.saucedemo.com/) with Cyp
 
 ## 🔁 CI/CD
 
-The workflow [`.github/workflows/cypress.yml`](.github/workflows/cypress.yml) runs on every push and pull request to `main`, and can also be triggered manually:
+The workflow [`.github/workflows/cypress.yml`](.github/workflows/cypress.yml) runs on every push and pull request to `main`, and can also be triggered manually. It has two jobs running in parallel:
 
-1. Installs dependencies (with npm cache)
-2. Runs the whole suite headless in Chrome
-3. Uploads the **Mochawesome HTML report** as an artifact on every run
-4. Uploads **screenshots** when a test fails
+| Job | Steps |
+|-----|-------|
+| **E2E tests (Chrome)** | Runs the Cypress suite headless in Chrome, uploads the **Mochawesome report** on every run and **screenshots** when a test fails |
+| **API tests (Bruno + ServeRest)** | Starts a local ServeRest instance, runs the Bruno collection and uploads the **Bruno HTML report** on every run |
 
-To see the report, open a run in the [Actions tab](https://github.com/TheSergioHenrique/qa-automation-portfolio/actions), download `mochawesome-report` and open `index.html`.
+To see the reports, open a run in the [Actions tab](https://github.com/TheSergioHenrique/qa-automation-portfolio/actions), download `mochawesome-report` or `bruno-report` and open `index.html`.
 
 ## 🛠️ Tech Stack
 
@@ -45,6 +64,8 @@ To see the report, open a run in the [Actions tab](https://github.com/TheSergioH
 |------|---------|
 | [Cypress](https://www.cypress.io/) | E2E testing |
 | [cypress-mochawesome-reporter](https://github.com/LironEr/cypress-mochawesome-reporter) | HTML reports with embedded screenshots |
+| [Bruno](https://www.usebruno.com/) + [Bruno CLI](https://docs.usebruno.com/bru-cli/overview) | API collections and tests |
+| [ServeRest](https://github.com/ServeRest/ServeRest) | REST API under test, run locally |
 | [GitHub Actions](https://github.com/features/actions) | CI/CD |
 
 ## 🗺️ Roadmap
@@ -56,7 +77,7 @@ To see the report, open a run in the [Actions tab](https://github.com/TheSergioH
 - [x] Mochawesome HTML reports
 - [x] Request interception and mocking
 - [ ] API tests with Cypress
-- [ ] Bruno API collections
+- [x] Bruno API collections (ServeRest)
 - [ ] Playwright version of the suite
 
 ## 📁 Project Structure
@@ -64,7 +85,9 @@ To see the report, open a run in the [Actions tab](https://github.com/TheSergioH
 ```
 qa-automation-portfolio/
 ├── .github/workflows/
-│   └── cypress.yml        # CI pipeline
+│   └── cypress.yml        # CI pipeline (E2E + API jobs)
+├── bruno-collections/
+│   └── serverest/         # Bruno collection + environments
 ├── cypress/
 │   ├── e2e/sauce-demo/    # E2E specs
 │   ├── fixtures/          # Test data
@@ -75,7 +98,7 @@ qa-automation-portfolio/
 
 ## 🚀 Getting Started
 
-**Prerequisites:** Node.js 18+
+**Prerequisites:** Node.js 22+ (required by ServeRest)
 
 ```bash
 git clone https://github.com/TheSergioHenrique/qa-automation-portfolio.git
@@ -88,3 +111,7 @@ npm ci
 | `npm test` | Runs the suite headless and generates `mochawesome-report/index.html` |
 | `npm run cy:run:chrome` | Same, in Chrome |
 | `npm run cy:open` | Opens the Cypress interactive runner |
+| `npm run api:server` | Starts ServeRest on `http://localhost:3000` |
+| `npm run api:test` | Runs the Bruno collection (needs `api:server` running) and generates `bruno-report/index.html` |
+
+You can also open `bruno-collections/serverest` in the Bruno app to run the requests one by one.
