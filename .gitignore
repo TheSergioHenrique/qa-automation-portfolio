@@ -30,3 +30,10 @@ build/
 
 # Bruno reports
 bruno-report/
+
+# Playwright
+playwright-report/
+test-results/
+playwright/.auth/
+blob-report/
+all-blob-reports/

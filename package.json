@@ -8,7 +8,10 @@
     "cy:open": "cypress open",
     "cy:run:chrome": "cypress run --browser chrome",
     "api:server": "serverest -t 3000",
-    "api:test": "mkdir -p bruno-report && cd bruno-collections/serverest && bru run --env local --reporter-html ../../bruno-report/index.html"
+    "api:test": "mkdir -p bruno-report && cd bruno-collections/serverest && bru run --env local --reporter-html ../../bruno-report/index.html",
+    "pw:test": "playwright test",
+    "pw:ui": "playwright test --ui",
+    "pw:report": "playwright show-report"
   },
   "repository": {
     "type": "git",
@@ -22,6 +25,7 @@
   },
   "homepage": "https://github.com/TheSergioHenrique/qa-automation-portfolio#readme",
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
     "@usebruno/cli": "^4.3.0",
     "cypress": "^15.8.2",
     "cypress-mochawesome-reporter": "^5.0.0",
