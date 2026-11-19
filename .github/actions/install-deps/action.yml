@@ -1,0 +1,49 @@
+name: Install dependencies
+description: >
+  Sets up Node, restores node_modules from cache and only runs `npm ci`
+  when the cache misses.
+
+inputs:
+  node-version:
+    description: Node.js version
+    default: "22"
+  environment:
+    description: >
+      Where the job runs (e.g. "host" or "playwright-container"). Part of the
+      cache key, so a node_modules built in one environment is never restored
+      in another.
+    default: host
+
+outputs:
+  cache-hit:
+    description: '"true" when node_modules came from the cache'
+    value: ${{ steps.node-modules.outputs.cache-hit }}
+
+runs:
+  using: composite
+  steps:
+    # Layer 1: npm download cache (~/.npm). Helps `npm ci` when node_modules misses.
+    - name: Setup Node
+      uses: actions/setup-node@v7
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: npm
+
+    # Layer 2: the installed node_modules. Key changes when the OS, Node version,
+    # environment or package-lock.json change, so a stale tree is never reused.
+    - name: Cache node_modules
+      id: node-modules
+      uses: actions/cache@v6
+      with:
+        path: node_modules
+        key: node-modules-${{ runner.os }}-${{ runner.arch }}-node${{ inputs.node-version }}-${{ inputs.environment }}-${{ hashFiles('package-lock.json') }}
+
+    - name: npm ci
+      if: steps.node-modules.outputs.cache-hit != 'true'
+      shell: bash
+      run: npm ci
+
+    - name: Cache status
+      shell: bash
+      run: |
+        echo "node_modules cache hit: ${{ steps.node-modules.outputs.cache-hit == 'true' }}" >> "$GITHUB_STEP_SUMMARY"
