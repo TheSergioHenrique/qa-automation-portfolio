@@ -49,10 +49,14 @@ jobs:
     name: E2E tests (Playwright) - shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
+
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.1-noble
+      options: --user 1001
     env:
-      CYPRESS_INSTALL_BINARY: 0 # this job does not need the Cypress binary
+      CYPRESS_INSTALL_BINARY: 0
     strategy:
-      fail-fast: false # let every shard finish so the merged report is complete
+      fail-fast: false
       matrix:
         shardIndex: [1, 2, 3]
         shardTotal: [3]
@@ -69,9 +73,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
 
       - name: Run Playwright (shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }})
         run: npx playwright test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}

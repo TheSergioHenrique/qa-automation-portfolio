@@ -102,7 +102,7 @@ The workflow [`.github/workflows/cypress.yml`](.github/workflows/cypress.yml) ru
 | Job | Steps |
 |-----|-------|
 | **E2E tests (Cypress)** | Runs the Cypress suite headless in Chrome, uploads the **Mochawesome report** on every run and **screenshots** when a test fails |
-| **E2E tests (Playwright) - shard 1/3, 2/3, 3/3** | Matrix of 3 jobs: each installs Chromium and runs its shard on desktop and mobile with 4 workers (1 retry on CI, trace on retry), then uploads a blob report |
+| **E2E tests (Playwright) - shard 1/3, 2/3, 3/3** | Matrix of 3 jobs inside the official Playwright Docker image (`mcr.microsoft.com/playwright`, Chromium and system deps preinstalled): each runs its shard on desktop and mobile with 4 workers (1 retry on CI, trace on retry), then uploads a blob report |
 | **Merge Playwright reports** | Waits for the 3 shards, merges their blob reports and uploads a single **Playwright HTML report** |
 | **API tests (Bruno + ServeRest)** | Starts a local ServeRest instance, runs the Bruno collection and uploads the **Bruno HTML report** on every run |
 
