@@ -37,3 +37,4 @@ test-results/
 playwright/.auth/
 blob-report/
 all-blob-reports/
+mochawesome-report-api/

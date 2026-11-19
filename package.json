@@ -11,7 +11,8 @@
     "api:test": "mkdir -p bruno-report && cd bruno-collections/serverest && bru run --env local --reporter-html ../../bruno-report/index.html",
     "pw:test": "playwright test",
     "pw:ui": "playwright test --ui",
-    "pw:report": "playwright show-report"
+    "pw:report": "playwright show-report",
+    "cy:api": "cypress run --config specPattern=cypress/api/**/*.cy.js --reporter-options reportDir=mochawesome-report-api,reportPageTitle=ServeRest-API,charts=true,inlineAssets=true"
   },
   "repository": {
     "type": "git",
