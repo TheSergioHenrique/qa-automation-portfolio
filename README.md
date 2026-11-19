@@ -7,11 +7,10 @@
 ![Bruno](https://img.shields.io/badge/Bruno-F4AA41?style=for-the-badge&logo=bruno&logoColor=black)
 ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white)
 
-Test automation portfolio with three suites:
+Test automation portfolio covering two apps:
 
-- **E2E** for [Sauce Demo](https://www.saucedemo.com/) with **Cypress**
-- **E2E** for the same app with **Playwright**, using Page Objects and fixtures
-- **API** for [ServeRest](https://github.com/ServeRest/ServeRest) with a **Bruno** collection
+- **E2E** for [Sauce Demo](https://www.saucedemo.com/) with **Cypress** and with **Playwright** (Page Objects and fixtures)
+- **API** for [ServeRest](https://github.com/ServeRest/ServeRest) with **Bruno**, **Cypress** (`cy.request`) and **Playwright** (`request` fixture), each one covering a different area of the API
 
 All of them run on every push through a GitHub Actions pipeline that publishes HTML reports.
 
@@ -76,7 +75,17 @@ push ──────► ├─ shard 2/3 ─┼──► merge-reports ──
 
 Locally, one shard with 4 workers takes about 7–8s (≈15 tests each). You can try it with `npx playwright test --shard=1/3`.
 
-### 🔌 API tests (Bruno)
+### 🔌 API tests
+
+The three API suites run against a local ServeRest and are split by area, so they don't repeat each other:
+
+| Suite | Focus |
+|-------|-------|
+| **Bruno** | Happy-path flow: users, login and products CRUD, chained in order |
+| **Cypress** | Cart business rules: stock, cancel/conclude purchase, limits, referential integrity |
+| **Playwright** | Field validation, boundaries and permissions, data-driven |
+
+#### Bruno
 
 The collection in [`bruno-collections/serverest`](bruno-collections/serverest) runs **14 requests / 31 tests** in order, passing data between requests (user id, email, token, product id):
 
@@ -89,11 +98,35 @@ The collection in [`bruno-collections/serverest`](bruno-collections/serverest) r
 
 Environments: `local` (`http://localhost:3000`, used in CI) and `serverest-dev` (public `https://serverest.dev`).
 
+#### Cypress (`cypress/api/carrinhos.cy.js`)
+
+10 tests + 1 known bug. Each test creates its own admin user and product through custom commands (`cy.apiCreateAdmin()`, `cy.apiCreateProduct()`, `cy.apiCreateCart()`) and `cy.apiCleanup()` removes them afterwards.
+
+| Context | Tests |
+|---------|-------|
+| Creating a cart | Stock is reserved and totals are calculated, only 1 cart per user, quantity above stock, unknown product, same product twice, token required |
+| Finishing a cart | Cancel restores the stock, conclude keeps it reduced and removes the cart |
+| Referential integrity | A product in a cart can't be deleted, a user with a cart can't be deleted |
+
+The API specs live outside `cypress/e2e`, so `npm test` keeps running only the Sauce Demo suite. They run with `npm run cy:api`.
+
+#### Playwright (`playwright/api/`)
+
+24 tests in their own `api` project (no browser), running in parallel with the E2E projects and split across the same shards. `webServer` in `playwright.config.js` starts ServeRest automatically. Fixtures (`adminUser`, `regularUser`) create a fresh user with a token for each test and delete it at the end, so parallel tests never share data.
+
+| Spec | Tests |
+|------|-------|
+| `usuarios.spec.js` | Invalid email, blank name, invalid `administrador`, unknown field, empty body, duplicate email, id format, filter by email, login validation (empty body, invalid email, unknown user) |
+| `produtos.spec.js` | Negative/zero/decimal price, negative quantity, zero quantity as lower boundary, duplicate name, permissions (no token, invalid token, non-admin 403, admin 201) |
+
 ### 🐛 Known bugs found
 
 | Bug | Where | Status |
 |-----|-------|--------|
-| Checkout is allowed with an empty cart: the user goes to `/checkout-step-one.html` instead of staying on `/cart.html` | `cart.cy.js`, `cart.spec.js` | **Cypress:** kept as `it.skip`, remove `.skip` to reproduce. **Playwright:** marked with `test.fail()`, so the test passes while the bug exists and turns red once it gets fixed |
+| **Sauce Demo:** checkout is allowed with an empty cart: the user goes to `/checkout-step-one.html` instead of staying on `/cart.html` | `cart.cy.js`, `cart.spec.js` | **Cypress:** kept as `it.skip`, remove `.skip` to reproduce. **Playwright:** marked with `test.fail()`, so the test passes while the bug exists and turns red once it gets fixed |
+| **ServeRest:** concluding a purchase without a cart returns `200 OK` ("Não foi encontrado carrinho para esse usuário") instead of a 4xx | `carrinhos.cy.js` | `it.skip` |
+| **ServeRest:** `GET /usuarios` returns every user's password in plain text | `usuarios.spec.js` | `test.fail()` |
+| **ServeRest:** a price sent as text (`"preco": "10"`) is silently converted and accepted with `201` | `produtos.spec.js` | `test.fail()` |
 
 ## 🔁 CI/CD
 
@@ -104,9 +137,10 @@ The workflow [`.github/workflows/cypress.yml`](.github/workflows/cypress.yml) ru
 | **E2E tests (Cypress)** | Runs the Cypress suite headless in Chrome, uploads the **Mochawesome report** on every run and **screenshots** when a test fails |
 | **E2E tests (Playwright) - shard 1/3, 2/3, 3/3** | Matrix of 3 jobs inside the official Playwright Docker image (`mcr.microsoft.com/playwright`, Chromium and system deps preinstalled): each runs its shard on desktop and mobile with 4 workers (1 retry on CI, trace on retry), then uploads a blob report |
 | **Merge Playwright reports** | Waits for the 3 shards, merges their blob reports and uploads a single **Playwright HTML report** |
-| **API tests (Bruno + ServeRest)** | Starts a local ServeRest instance, runs the Bruno collection and uploads the **Bruno HTML report** on every run |
+| **API tests (Bruno)** | Starts a local ServeRest instance, runs the Bruno collection and uploads the **Bruno HTML report** on every run |
+| **API tests (Cypress)** | `cypress-io/github-action` starts ServeRest, waits for it and runs the Cypress API specs, uploading a separate **Mochawesome API report** |
 
-To see the reports, open a run in the [Actions tab](https://github.com/TheSergioHenrique/qa-automation-portfolio/actions), download `mochawesome-report`, `playwright-report` or `bruno-report` and open `index.html`.
+To see the reports, open a run in the [Actions tab](https://github.com/TheSergioHenrique/qa-automation-portfolio/actions), download `mochawesome-report`, `mochawesome-report-api`, `playwright-report` or `bruno-report` and open `index.html`. The Playwright API tests are part of `playwright-report`.
 
 ### 🗄️ Caching
 
@@ -124,7 +158,7 @@ Measured on GitHub Actions, same commit, first run (cache miss) vs. re-run (cach
 
 | Job | Install (miss → hit) | Whole job (miss → hit) |
 |-----|:--------------------:|:----------------------:|
-| API tests (Bruno + ServeRest) | 24s → 4s | 41s → 14s |
+| API tests (Bruno) | 24s → 4s | 41s → 14s |
 | Playwright shard 1/3 | 18s → 5s | 65s → 52s |
 | Playwright shard 2/3 | 15s → 6s | 61s → 53s |
 | Playwright shard 3/3 | 21s → 8s | 60s → 46s |
@@ -135,8 +169,8 @@ Restoring the 79 MB `node_modules` takes 4–8s instead of 15–24s for `npm ci`
 
 | Tool | Purpose |
 |------|---------|
-| [Cypress](https://www.cypress.io/) | E2E testing |
-| [Playwright](https://playwright.dev/) | E2E testing with Page Objects, fixtures and multiple projects |
+| [Cypress](https://www.cypress.io/) | E2E and API testing |
+| [Playwright](https://playwright.dev/) | E2E and API testing with Page Objects, fixtures and multiple projects |
 | [cypress-mochawesome-reporter](https://github.com/LironEr/cypress-mochawesome-reporter) | HTML reports with embedded screenshots |
 | [Bruno](https://www.usebruno.com/) + [Bruno CLI](https://docs.usebruno.com/bru-cli/overview) | API collections and tests |
 | [ServeRest](https://github.com/ServeRest/ServeRest) | REST API under test, run locally |
@@ -150,7 +184,7 @@ Restoring the 79 MB `node_modules` takes 4–8s instead of 15–24s for `npm ci`
 - [x] CI/CD pipeline with GitHub Actions
 - [x] Mochawesome HTML reports
 - [x] Request interception and mocking
-- [ ] API tests with Cypress
+- [x] API tests with Cypress and Playwright
 - [x] Bruno API collections (ServeRest)
 - [x] Playwright version of the suite
 
@@ -166,10 +200,12 @@ qa-automation-portfolio/
 ├── bruno-collections/
 │   └── serverest/         # Bruno collection + environments
 ├── cypress/
+│   ├── api/               # API specs (ServeRest)
 │   ├── e2e/sauce-demo/    # E2E specs
 │   ├── fixtures/          # Test data
-│   └── support/           # Custom commands + reporter registration
+│   └── support/           # Custom commands (UI + API) + reporter registration
 ├── playwright/
+│   ├── api/               # API specs + user fixtures (ServeRest)
 │   ├── pages/             # Page Objects
 │   ├── tests/             # Specs + auth setup
 │   ├── fixtures.js        # Custom fixtures
@@ -195,10 +231,11 @@ npm ci
 | `npm run cy:run:chrome` | Same, in Chrome |
 | `npm run cy:open` | Opens the Cypress interactive runner |
 | `npx playwright install chromium` | Downloads the browser used by Playwright (first time only) |
-| `npm run pw:test` | Runs the Playwright suite (desktop + mobile) and generates `playwright-report/` |
+| `npm run pw:test` | Runs the Playwright suite (desktop + mobile + API, starting ServeRest by itself) and generates `playwright-report/` |
 | `npm run pw:ui` | Opens Playwright UI mode |
 | `npm run pw:report` | Opens the last Playwright HTML report |
 | `npm run api:server` | Starts ServeRest on `http://localhost:3000` |
 | `npm run api:test` | Runs the Bruno collection (needs `api:server` running) and generates `bruno-report/index.html` |
+| `npm run cy:api` | Runs the Cypress API specs (needs `api:server` running) and generates `mochawesome-report-api/index.html` |
 
 You can also open `bruno-collections/serverest` in the Bruno app to run the requests one by one.
