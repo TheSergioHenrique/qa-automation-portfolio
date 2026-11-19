@@ -120,6 +120,17 @@ The pipeline uses three cache layers:
 
 The `node_modules` cache key is `OS + arch + Node version + environment + hash of package-lock.json`. Any dependency change creates a new key, and the `environment` part (`host` or `playwright-container`) keeps a tree built inside the Playwright Docker image from being restored on the plain runner.
 
+Measured on GitHub Actions, same commit, first run (cache miss) vs. re-run (cache hit):
+
+| Job | Install (miss → hit) | Whole job (miss → hit) |
+|-----|:--------------------:|:----------------------:|
+| API tests (Bruno + ServeRest) | 24s → 4s | 41s → 14s |
+| Playwright shard 1/3 | 18s → 5s | 65s → 52s |
+| Playwright shard 2/3 | 15s → 6s | 61s → 53s |
+| Playwright shard 3/3 | 21s → 8s | 60s → 46s |
+
+Restoring the 79 MB `node_modules` takes 4–8s instead of 15–24s for `npm ci`. On the Playwright shards, most of the remaining time is starting the Docker container (~20s). The merge job already gets a hit on the first run, because it starts after the API job has saved the `host` cache.
+
 ## 🛠️ Tech Stack
 
 | Tool | Purpose |
