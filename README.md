@@ -108,6 +108,18 @@ The workflow [`.github/workflows/cypress.yml`](.github/workflows/cypress.yml) ru
 
 To see the reports, open a run in the [Actions tab](https://github.com/TheSergioHenrique/qa-automation-portfolio/actions), download `mochawesome-report`, `playwright-report` or `bruno-report` and open `index.html`.
 
+### 🗄️ Caching
+
+The pipeline uses three cache layers:
+
+| Layer | What is cached | Where |
+|-------|----------------|-------|
+| npm download cache | `~/.npm` (downloaded packages) | `actions/setup-node` with `cache: npm`, all jobs |
+| `node_modules` | The installed dependency tree. On a cache hit, `npm ci` is skipped | Reusable composite action [`.github/actions/install-deps`](.github/actions/install-deps/action.yml), used by Playwright, merge and API jobs |
+| Cypress binary | `~/.cache/Cypress` | Built into `cypress-io/github-action` |
+
+The `node_modules` cache key is `OS + arch + Node version + environment + hash of package-lock.json`. Any dependency change creates a new key, and the `environment` part (`host` or `playwright-container`) keeps a tree built inside the Playwright Docker image from being restored on the plain runner.
+
 ## 🛠️ Tech Stack
 
 | Tool | Purpose |
@@ -135,8 +147,11 @@ To see the reports, open a run in the [Actions tab](https://github.com/TheSergio
 
 ```
 qa-automation-portfolio/
-├── .github/workflows/
-│   └── cypress.yml        # CI pipeline (Cypress, Playwright and API jobs)
+├── .github/
+│   ├── workflows/
+│   │   └── cypress.yml    # CI pipeline (Cypress, Playwright and API jobs)
+│   └── actions/
+│       └── install-deps/  # Composite action: Node + node_modules cache + npm ci
 ├── bruno-collections/
 │   └── serverest/         # Bruno collection + environments
 ├── cypress/
